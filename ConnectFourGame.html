@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Four</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #board { display: grid; grid-template-columns: repeat(7, 50px); gap: 5px; }
+    .cell { width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; }
+    .piece { border-radius: 50%; width: 40px; height: 40px; }
+  </style>
+</head>
+<body>
+  <input type="text" id="player1Color" placeholder="Player 1 Color" value="teal">
+  <input type="text" id="player2Color" placeholder="Player 2 Color" value="tomato">
+  <button onclick="startGame()">Start Game!</button>
+  <div id="board"></div>
+
+  <script>
+    class Player {
+      constructor(color) {
+        this.color = color;
+      }
+    }
+
+    class Game {
+      constructor(height = 6, width = 7) {
+        this.height = height;
+        this.width = width;
+        this.board = [];
+        this.players = [];
+        this.currPlayer = null;
+        this.gameOver = false;
+        this.makeBoard();
+        this.makeHtmlBoard();
+      }
+
+      makeBoard() {
+        this.board = Array.from({ length: this.height }, () => Array(this.width).fill(null));
+      }
+
+      makeHtmlBoard() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.x = x;
+            cell.addEventListener('click', () => this.handleClick(x));
+            board.append(cell);
+          }
+        }
+      }
+
+      handleClick(x) {
+        if (this.gameOver) return;
+        const y = this.board.findIndex(row => row[x] === null);
+        if (y === -1) return;
+        this.board[y][x] = this.currPlayer;
+        this.placeInTable(y, x);
+        if (this.checkForWin()) {
+          alert(`${this.currPlayer.color} wins!`);
+          this.gameOver = true;
+        }
+        this.currPlayer = this.currPlayer === this.players[0] ? this.players[1] : this.players[0];
+      }
+
+      placeInTable(y, x) {
+        const cell = document.querySelector(`.cell[data-x='${x}']:nth-child(${this.height - y})`);
+        const piece = document.createElement('div');
+        piece.classList.add('piece');
+        piece.style.backgroundColor = this.currPlayer.color;
+        cell.append(piece);
+      }
+
+      checkForWin() {
+        const win = cells => cells.every(([y, x]) => this.board[y]?.[x] === this.currPlayer);
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            const horiz = [[y, x], [y, x + 1], [y, x + 2], [y, x + 3]];
+            const vert = [[y, x], [y + 1, x], [y + 2, x], [y + 3, x]];
+            const diagDR = [[y, x], [y + 1, x + 1], [y + 2, x + 2], [y + 3, x + 3]];
+            const diagDL = [[y, x], [y + 1, x - 1], [y + 2, x - 2], [y + 3, x - 3]];
+            if (win(horiz) || win(vert) || win(diagDR) || win(diagDL)) return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    function startGame() {
+      const player1Color = document.getElementById('player1Color').value;
+      const player2Color = document.getElementById('player2Color').value;
+      const player1 = new Player(player1Color);
+      const player2 = new Player(player2Color);
+      const game = new Game();
+      game.players = [player1, player2];
+      game.currPlayer = player1;
+    }
+  </script>
+</body>
+</html>
